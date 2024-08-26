@@ -1,13 +1,29 @@
 import gsap from "gsap";
+import imagesLoaded from "imagesloaded";
+import { Observer } from "gsap/Observer";
 
+// Preload Images Function
+const preloadImages = (selector = "img") => {
+  return new Promise((resolve) => {
+    imagesLoaded(
+      document.querySelectorAll(selector),
+      { background: true },
+      resolve
+    );
+  });
+};
+
+// Slideshow Class
 const NEXT = 1;
 const PREV = -1;
 
-export class Slideshow {
-  constructor(slides, slidesInner) {
+class Slideshow {
+  constructor(slides) {
     this.DOM = {
       slides,
-      slidesInner,
+      slidesInner: Array.from(slides).map((item) =>
+        item.querySelector(".slide__img")
+      ),
     };
 
     this.current = 0;
@@ -99,3 +115,30 @@ export class Slideshow {
       );
   }
 }
+
+// Initialization
+document.addEventListener("DOMContentLoaded", () => {
+  const slides = document.querySelectorAll(".slide");
+  const slideshow = new Slideshow(slides);
+
+  document
+    .querySelector(".slides-nav__item--prev")
+    .addEventListener("click", () => slideshow.previous());
+  document
+    .querySelector(".slides-nav__item--next")
+    .addEventListener("click", () => slideshow.next());
+
+  Observer.create({
+    type: "wheel, touch, pointer",
+    onDown: () => slideshow.previous(),
+    onUp: () => slideshow.next(),
+    wheelSpeed: -1,
+    tolerance: 10,
+  });
+
+  preloadImages(".slide__img").then(() =>
+    document.body.classList.remove("loading")
+  );
+});
+
+export { preloadImages, Slideshow };

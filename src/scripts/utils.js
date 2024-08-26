@@ -1,7 +1,3 @@
-
-// @param {string} selector
-
-// @returns {Promise}
 import imagesLoaded from "imagesloaded";
 
 const preloadImages = (selector = 'img') => {
