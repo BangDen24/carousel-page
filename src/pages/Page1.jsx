@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import gsap from "gsap";
 import { Observer } from "gsap/Observer";
 import "../styles/base.scss";
@@ -13,17 +13,74 @@ gsap.registerPlugin(Observer);
 
 const Page1 = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const slidesRef = useRef([]);
 
   const slides = [a, b, c, d, e];
 
   const nextSlide = () => {
-    setCurrentSlide((prevSlide) => (prevSlide + 1) % slides.length);
+    if (isAnimating) return;
+    const nextSlideIndex = (currentSlide + 1) % slides.length;
+    animateSlide(currentSlide, nextSlideIndex);
+    setCurrentSlide(nextSlideIndex);
   };
 
   const prevSlide = () => {
-    setCurrentSlide((prevSlide) =>
-      prevSlide === 0 ? slides.length - 1 : prevSlide - 1
-    );
+    if (isAnimating) return;
+    const prevSlideIndex =
+      currentSlide === 0 ? slides.length - 1 : currentSlide - 1;
+    animateSlide(currentSlide, prevSlideIndex);
+    setCurrentSlide(prevSlideIndex);
+  };
+
+  const animateSlide = (current, next) => {
+    setIsAnimating(true);
+
+    const timeline = gsap.timeline({
+      defaults: { duration: 1.2, ease: "expo" },
+      onStart: () => {
+        const currentSlideElem = slidesRef.current[current];
+        const nextSlideElem = slidesRef.current[next];
+        gsap.set(nextSlideElem, { zIndex: 99 });
+        currentSlideElem.classList.add("slide--current");
+      },
+      onComplete: () => {
+        const currentSlideElem = slidesRef.current[current];
+        const nextSlideElem = slidesRef.current[next];
+        currentSlideElem.classList.remove("slide--current");
+        gsap.set(nextSlideElem, { zIndex: 1 });
+        setIsAnimating(false);
+      },
+    });
+
+    timeline
+      .addLabel("start", 0)
+      .to(slidesRef.current[current], { autoAlpha: 0 }, "start")
+      .fromTo(
+        slidesRef.current[next],
+        {
+          autoAlpha: 1,
+          scale: 0,
+          yPercent: 100,
+        },
+        {
+          scale: 1,
+          yPercent: 0,
+        },
+        "start"
+      )
+      .fromTo(
+        slidesRef.current[next].querySelector(".slide__img"),
+        {
+          scale: 2,
+          filter: "brightness(600%)",
+        },
+        {
+          scale: 1,
+          filter: "brightness(100%)",
+        },
+        "start"
+      );
   };
 
   useEffect(() => {
@@ -40,7 +97,7 @@ const Page1 = () => {
     return () => {
       observer.kill();
     };
-  }, []);
+  }, [isAnimating]);
 
   return (
     <div className="demo-1 loading">
@@ -84,6 +141,7 @@ const Page1 = () => {
             className={`slide ${
               index === currentSlide ? "slide--current" : ""
             }`}
+            ref={(el) => (slidesRef.current[index] = el)}
           >
             <div
               className="slide__img"
