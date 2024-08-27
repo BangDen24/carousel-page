@@ -3,44 +3,125 @@ import { useState, useEffect } from "react";
 import gsap from "gsap";
 import { Observer } from "gsap/Observer";
 import "../styles/base.scss";
-import a from "../assets/31.jpg";
-import b from "../assets/32.jpg";
-import c from "../assets/33.jpg";
-import d from "../assets/34.jpg";
-import e from "../assets/35.jpg";
+import a from "../assets/51.jpg";
+import b from "../assets/52.jpg";
+import c from "../assets/53.jpg";
+import d from "../assets/54.jpg";
+import e from "../assets/55.jpg";
 
-gsap.registerPlugin(Observer);
+// gsap.registerPlugin(Observer);
 
 const Page3 = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
 
   const slides = [a, b, c, d, e];
 
   const nextSlide = () => {
-    setCurrentSlide((prevSlide) => (prevSlide + 1) % slides.length);
+    if (isAnimating) return;
+    const nextSlideIndex = (currentSlide + 1) % slides.length;
+    navigate(1, currentSlide, nextSlideIndex);
+    setCurrentSlide(nextSlideIndex);
   };
 
   const prevSlide = () => {
-    setCurrentSlide((prevSlide) =>
-      prevSlide === 0 ? slides.length - 1 : prevSlide - 1
-    );
+    if (isAnimating) return;
+    const prevSlideIndex =
+      currentSlide === 0 ? slides.length - 1 : currentSlide - 1;
+    navigate(-1, currentSlide, prevSlideIndex);
+    setCurrentSlide(prevSlideIndex);
+  };
+
+  const navigate = (direction, current, next) => {
+    setIsAnimating(true);
+
+    const currentSlideElem = document.querySelector(`.slide-${current}`);
+    const nextSlideElem = document.querySelector(`.slide-${next}`);
+    const deco = document.querySelectorAll(".deco");
+
+    // Set zIndex for upcoming slide
+    gsap.set(nextSlideElem, { zIndex: 99 });
+
+    const timeline = gsap.timeline({
+      defaults: { ease: "expo" },
+      onStart: () => {
+        nextSlideElem.classList.add("slide--current");
+      },
+      onComplete: () => {
+        currentSlideElem.classList.remove("slide--current");
+        gsap.set(nextSlideElem, { zIndex: 1 });
+        setIsAnimating(false);
+      },
+    });
+
+    timeline
+      .addLabel("start", 0)
+      .fromTo(
+        nextSlideElem,
+        {
+          autoAlpha: 1,
+          scale: 0.1,
+          xPercent: direction * 100,
+        },
+        {
+          duration: 0.7,
+          ease: "expo",
+          scale: 0.4,
+          xPercent: 0,
+        },
+        "start"
+      )
+      .fromTo(
+        nextSlideElem.querySelector(".slide__img"),
+        {
+          filter: "contrast(100%) saturate(100%)",
+          transformOrigin: "100% 50%",
+          scaleX: 4,
+        },
+        {
+          duration: 0.7,
+          ease: "expo",
+          scaleX: 1,
+        },
+        "start"
+      )
+      .fromTo(
+        currentSlideElem.querySelector(".slide__img"),
+        {
+          filter: "contrast(100%) saturate(100%)",
+        },
+        {
+          filter: "contrast(120%) saturate(140%)",
+        },
+        "start"
+      )
+      .addLabel("middle", "start+=0.6")
+      .to(nextSlideElem, {
+        duration: 1,
+        ease: "power4.inOut",
+        scale: 1,
+      }, "middle")
+      .to(currentSlideElem, {
+        duration: 1,
+        ease: "power4.inOut",
+        scale: 1,
+        autoAlpha: 0,
+      }, "middle");
   };
 
   useEffect(() => {
-    // Create the Observer instance
     const observer = Observer.create({
       type: "wheel,touch,pointer",
-      onDown: () => prevSlide(), // Call prevSlide function
-      onUp: () => nextSlide(), // Call nextSlide function
+      onDown: () => prevSlide(),
+      onUp: () => nextSlide(),
       wheelSpeed: -1,
       tolerance: 10,
     });
 
-    // Cleanup observer on component unmount
     return () => {
       observer.kill();
     };
-  }, []);
+  }, [isAnimating]);
 
   return (
     <div className="demo-1 loading">
@@ -52,13 +133,13 @@ const Page3 = () => {
         </div>
         <nav className="frame__demos">
           <span>Variations</span>
-          <Link to="/page1" className="frame__demo frame__demo--current">
+          <Link to="/" className="frame__demo">
             01
           </Link>
           <Link to="/page2" className="frame__demo">
             02
           </Link>
-          <Link to="/page3" className="frame__demo">
+          <Link to="/page3" className="frame__demo frame__demo--current">
             03
           </Link>
         </nav>
@@ -81,7 +162,7 @@ const Page3 = () => {
         {slides.map((slide, index) => (
           <div
             key={index}
-            className={`slide ${
+            className={`slide slide-${index} ${
               index === currentSlide ? "slide--current" : ""
             }`}
           >
@@ -91,6 +172,12 @@ const Page3 = () => {
             ></div>
           </div>
         ))}
+        <div className="deco deco--5"></div>
+        <div className="deco deco--5"></div>
+        <div className="deco deco--6"></div>
+        <div className="deco deco--6"></div>
+        <div className="deco deco--7"></div>
+        <div className="deco deco--7"></div>
       </div>
     </div>
   );

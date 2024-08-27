@@ -40,9 +40,9 @@ body {
   grid-template-columns: auto 1fr;
   grid-template-rows: auto auto auto auto 1fr;
   grid-template-areas:
-    'title title'
+    'title demos'
+    'title demos'
     'prev back'
-    'demos demos'
     'sponsor sponsor'
     'nav nav';
   justify-content: start;

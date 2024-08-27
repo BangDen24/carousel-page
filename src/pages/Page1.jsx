@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import gsap from "gsap";
 import { Observer } from "gsap/Observer";
 import "../styles/base.scss";
@@ -14,14 +14,13 @@ gsap.registerPlugin(Observer);
 const Page1 = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
-  const slidesRef = useRef([]);
 
   const slides = [a, b, c, d, e];
 
   const nextSlide = () => {
     if (isAnimating) return;
     const nextSlideIndex = (currentSlide + 1) % slides.length;
-    animateSlide(currentSlide, nextSlideIndex);
+    navigate(1, currentSlide, nextSlideIndex);
     setCurrentSlide(nextSlideIndex);
   };
 
@@ -29,24 +28,25 @@ const Page1 = () => {
     if (isAnimating) return;
     const prevSlideIndex =
       currentSlide === 0 ? slides.length - 1 : currentSlide - 1;
-    animateSlide(currentSlide, prevSlideIndex);
+    navigate(-1, currentSlide, prevSlideIndex);
     setCurrentSlide(prevSlideIndex);
   };
 
-  const animateSlide = (current, next) => {
+  const navigate = (direction, current, next) => {
     setIsAnimating(true);
+
+    const currentSlideElem = document.querySelector(`.slide-${current}`);
+    const nextSlideElem = document.querySelector(`.slide-${next}`);
+    
+    // Set zIndex for upcoming slide
+    gsap.set(nextSlideElem, { zIndex: 99 });
 
     const timeline = gsap.timeline({
       defaults: { duration: 1.2, ease: "expo" },
       onStart: () => {
-        const currentSlideElem = slidesRef.current[current];
-        const nextSlideElem = slidesRef.current[next];
-        gsap.set(nextSlideElem, { zIndex: 99 });
-        currentSlideElem.classList.add("slide--current");
+        nextSlideElem.classList.add("slide--current");
       },
       onComplete: () => {
-        const currentSlideElem = slidesRef.current[current];
-        const nextSlideElem = slidesRef.current[next];
         currentSlideElem.classList.remove("slide--current");
         gsap.set(nextSlideElem, { zIndex: 1 });
         setIsAnimating(false);
@@ -55,13 +55,12 @@ const Page1 = () => {
 
     timeline
       .addLabel("start", 0)
-      .to(slidesRef.current[current], { autoAlpha: 0 }, "start")
       .fromTo(
-        slidesRef.current[next],
+        nextSlideElem,
         {
           autoAlpha: 1,
-          scale: 0,
-          yPercent: 100,
+          scale: 0.1,
+          yPercent: direction * 100,
         },
         {
           scale: 1,
@@ -70,7 +69,7 @@ const Page1 = () => {
         "start"
       )
       .fromTo(
-        slidesRef.current[next].querySelector(".slide__img"),
+        nextSlideElem.querySelector(".slide__img"),
         {
           scale: 2,
           filter: "brightness(600%)",
@@ -80,20 +79,36 @@ const Page1 = () => {
           filter: "brightness(100%)",
         },
         "start"
-      );
+      )
+      .fromTo(
+        currentSlideElem.querySelector(".slide__img"),
+        {
+          filter: "contrast(100%) saturate(100%)",
+        },
+        {
+          filter: "contrast(120%) saturate(140%)",
+        },
+        "start"
+      )
+      .addLabel("middle", "start+=0.6")
+      .to(nextSlideElem, {
+        scale: 1,
+      }, "middle")
+      .to(currentSlideElem, {
+        scale: 1,
+        autoAlpha: 0,
+      }, "middle");
   };
 
   useEffect(() => {
-    // Create the Observer instance
     const observer = Observer.create({
       type: "wheel,touch,pointer",
-      onDown: () => prevSlide(), // Call prevSlide function
-      onUp: () => nextSlide(), // Call nextSlide function
+      onDown: () => prevSlide(),
+      onUp: () => nextSlide(),
       wheelSpeed: -1,
       tolerance: 10,
     });
 
-    // Cleanup observer on component unmount
     return () => {
       observer.kill();
     };
@@ -138,10 +153,9 @@ const Page1 = () => {
         {slides.map((slide, index) => (
           <div
             key={index}
-            className={`slide ${
+            className={`slide slide-${index} ${
               index === currentSlide ? "slide--current" : ""
             }`}
-            ref={(el) => (slidesRef.current[index] = el)}
           >
             <div
               className="slide__img"
