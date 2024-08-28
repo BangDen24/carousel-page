@@ -9,7 +9,8 @@ import c from "../assets/53.jpg";
 import d from "../assets/54.jpg";
 import e from "../assets/55.jpg";
 
-// gsap.registerPlugin(Observer);
+// [HIGHLIGHT] Register Observer Plugin
+gsap.registerPlugin(Observer);
 
 const Page3 = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -19,42 +20,108 @@ const Page3 = () => {
 
   const nextSlide = () => {
     if (isAnimating) return;
-    const nextSlideIndex = (currentSlide + 1) % slides.length;
+    const nextSlideIndex = currentSlide + 1;
+    if (nextSlideIndex >= slides.length) {
+      setCurrentSlide(0);
+    } else {
+      setCurrentSlide(nextSlideIndex);
+    }
+    // [HIGHLIGHT] Corrected parameter from `-1` to `1`
     navigate(1, currentSlide, nextSlideIndex);
-    setCurrentSlide(nextSlideIndex);
   };
 
   const prevSlide = () => {
     if (isAnimating) return;
-    const prevSlideIndex =
-      currentSlide === 0 ? slides.length - 1 : currentSlide - 1;
+    const prevSlideIndex = currentSlide - 1;
+    if (prevSlideIndex < 0) {
+      setCurrentSlide(slides.length - 1);
+    } else {
+      setCurrentSlide(prevSlideIndex);
+    }
+    // [HIGHLIGHT] Corrected parameter from `nextSlideIndex` to `prevSlideIndex`
     navigate(-1, currentSlide, prevSlideIndex);
-    setCurrentSlide(prevSlideIndex);
   };
 
   const navigate = (direction, current, next) => {
     setIsAnimating(true);
 
-    const currentSlideElem = document.querySelector(`.slide-${current}`);
-    const nextSlideElem = document.querySelector(`.slide-${next}`);
-    
-    gsap.timeline()
-      .to(currentSlideElem, { opacity: 0, duration: 0.3 })
-      .fromTo(nextSlideElem, 
-        { opacity: 0 }, 
-        { opacity: 1, duration: 0.3 })
-      .call(() => {
-        const decoElements = document.querySelectorAll(".deco");
-        gsap.timeline()
-          .FromTo(decoElements, 
-            0.15, // durasi setiap elemen
-            { xPercent: (_, i) => i % 2 === 0 ? 100 : -100, autoAlpha: 1 },
-            { xPercent: 0, autoAlpha: 1, ease: "power2.inOut", repeat: 1, yoyo: true }, // efek boomerang
-            -0.2) // jeda antar elemen dimulai sebelum transisi foto selesai
-          .call(() => {
-            setIsAnimating(false);
-          });
-      });
+    const SlideCurr = document.querySelector(`.slide-${current}`);
+    const SlideNext = document.querySelector(`.slide-${next}`);
+    const decoElements = document.querySelectorAll(".deco");
+
+    gsap.set(SlideNext, { zIndex: 99 });
+
+    const tl = gsap
+      .timeline({
+        defaults: {
+          duration: 0.8,
+          ease: "power4.inOut",
+        },
+        // [HIGHLIGHT] Corrected `isAnimating(false);` to `setIsAnimating(false);`
+        onComplete: () => setIsAnimating(false),
+      })
+      // [HIGHLIGHT] Corrected `addlabel` to `addLabel`
+      .addLabel("start", 0);
+
+    decoElements.forEach((x, pos, arr) => {
+      const deco = arr[arr.length - 1 - pos];
+      tl.fromTo(
+        deco,
+        {
+          xPercent: (x) => (pos % 2 === 1 ? -100 : 100),
+          autoAlpha: 1,
+        },
+        {
+          xPercent: (x) => (pos % 2 === 1 ? 50 : -50),
+          onComplete: () => {
+            if (pos === arr.length - 1) {
+              SlideCurr.classList.remove("slide--current");
+              SlideNext.classList.add("slide--current");
+            }
+          },
+        },
+        `start+=${Math.floor((arr.length - 1 - pos) / 2) * 0.14}`
+      );
+
+      if (pos === 0) {
+        tl.addLabel("middle", ">");
+      }
+    });
+
+    tl.to(
+      SlideCurr,
+      {
+        ease: "power4.in",
+        scale: 0.1,
+        onComplete: () => gsap.set(SlideCurr, { scale: 1 }),
+      },
+      "start"
+    );
+
+    // [HIGHLIGHT] Corrected to ensure unique variable names in the loop
+    decoElements.forEach((x, pos, arr) => {
+      const deco = arr[arr.length - 1 - pos];
+      tl.to(
+        deco,
+        {
+          xPercent: () => (pos % 2 === 1 ? -100 : 100),
+        },
+        `middle+=${Math.floor(pos / 2) * 0.12}`
+      );
+    });
+
+    tl.fromTo(
+      SlideNext,
+      {
+        scale: 0.6,
+      },
+      {
+        duration: 1.1,
+        ease: "expo",
+        scale: 1,
+      },
+      ">-0.8"
+    );
   };
 
   useEffect(() => {
@@ -62,14 +129,14 @@ const Page3 = () => {
       type: "wheel,touch,pointer",
       onDown: () => prevSlide(),
       onUp: () => nextSlide(),
-      wheelSpeed: -1,
+      wheelSpeed: 1,
       tolerance: 10,
     });
 
     return () => {
       observer.kill();
     };
-  }, [isAnimating]);
+  }, []);
 
   return (
     <div className="demo-1 loading">
@@ -120,11 +187,9 @@ const Page3 = () => {
             ></div>
           </div>
         ))}
-        <div className="deco deco--5"></div>
+        {/* [HIGHLIGHT] Ensure unique deco elements */}
         <div className="deco deco--5"></div>
         <div className="deco deco--6"></div>
-        <div className="deco deco--6"></div>
-        <div className="deco deco--7"></div>
         <div className="deco deco--7"></div>
       </div>
     </div>

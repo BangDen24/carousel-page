@@ -9,7 +9,7 @@ import c from "../assets/53.jpg";
 import d from "../assets/54.jpg";
 import e from "../assets/55.jpg";
 
-
+// [HIGHLIGHT] Register Observer Plugin
 gsap.registerPlugin(Observer);
 
 const Page3 = () => {
@@ -20,27 +20,34 @@ const Page3 = () => {
 
   const nextSlide = () => {
     if (isAnimating) return;
-    const nextSlideIndex =
-      currentSlide + 1 >= slides.length ? 0 : currentSlide + 1;
+    const nextSlideIndex = currentSlide + 1;
+    if (nextSlideIndex >= slides.length) {
+      setCurrentSlide(0);
+    } else {
+      setCurrentSlide(nextSlideIndex);
+    }
     navigate(currentSlide, nextSlideIndex);
-    setCurrentSlide(nextSlideIndex);
   };
 
   const prevSlide = () => {
     if (isAnimating) return;
-    const prevSlideIndex =
-      currentSlide - 1 < 0 ? slides.length - 1 : currentSlide - 1;
+    const prevSlideIndex = currentSlide - 1;
+    if (prevSlideIndex < 0) {
+      setCurrentSlide(slides.length - 1);
+    } else {
+      setCurrentSlide(prevSlideIndex);
+    }
     navigate(currentSlide, prevSlideIndex);
-    setCurrentSlide(prevSlideIndex);
   };
 
   const navigate = (current, next) => {
     setIsAnimating(true);
+
     const SlideCurr = document.querySelector(`.slide-${current}`);
     const SlideNext = document.querySelector(`.slide-${next}`);
     const decoElements = document.querySelectorAll(".deco");
 
-    gsap.set(SlideNext, { zIndex: 1 });
+    gsap.set(SlideNext, { zIndex: 99 });
 
     const tl = gsap.timeline({
       defaults: {
@@ -49,49 +56,24 @@ const Page3 = () => {
       },
       onComplete: () => {
         setIsAnimating(false);
+        SlideCurr.classList.remove("slide--current");
+        SlideNext.classList.add("slide--current");
       },
     });
 
-    tl.addLabel("start", 0);
-
-    decoElements.forEach((x, pos, arr) => {
-      const deco = arr[arr.length - 1 - pos];
-      tl.fromTo(
-        deco,
-        {
-          xPercent: (x) => (pos % 2 === 1 ? -100 : 100),
-          autoAlpha: 1,
-        },
-        {
-          xPercent: (x) => (pos % 2 === 1 ? 50 : -50),
-          onComplete: () => {
-            if (pos === arr.length - 1) {
-              SlideCurr.classList.remove("slide--current");
-              SlideNext.classList.add("slide--current");
-            }
-          },
-        },
-        `start+=${Math.floor((arr.length - 1 - pos) / 2) * 0.14}`
-      );
-      if (!pos) {
-        tl.addLabel("middle", ">");
-      }
-    });
-
+    // Animasi slide saat ini - scale out
     tl.to(
       SlideCurr,
       {
         ease: "power4.in",
         scale: 0.1,
-        onComplete: () =>
-          gsap.set(SlideCurr, {
-            scale: 1,
-          }),
+        onComplete: () => gsap.set(SlideCurr, { scale: 1 }),
       },
       "start"
     );
 
-    decoElements.forEach((x, pos, arr) => {
+    // Animasi untuk elemen dekorasi
+    [...decoElements].forEach((_, pos, arr) => {
       const deco = arr[arr.length - 1 - pos];
       tl.to(
         deco,
@@ -102,6 +84,7 @@ const Page3 = () => {
       );
     });
 
+    // Animasi untuk slide berikutnya - scale in
     tl.fromTo(
       SlideNext,
       {
@@ -114,6 +97,9 @@ const Page3 = () => {
       },
       ">-0.8"
     );
+
+    // Label start untuk memulai urutan animasi
+    tl.addLabel("start", 0);
   };
 
   useEffect(() => {
@@ -129,7 +115,6 @@ const Page3 = () => {
       observer.kill();
     };
   }, []);
-
 
   return (
     <div className="demo-1 loading">
@@ -147,10 +132,9 @@ const Page3 = () => {
           <Link to="/page2" className="frame__demo">
             02
           </Link>
-          <Link to="/page3" className="frame__demo">
+          <Link to="/page3" className="frame__demo frame__demo--current">
             03
           </Link>
-          <Link to = "/x" className="frame__demo frame__demo--current"> 3x</Link>
         </nav>
         <nav className="slides-nav">
           <button

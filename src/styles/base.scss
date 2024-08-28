@@ -51,6 +51,7 @@ body {
   z-index: 100;
   /* pointer-events: none; Remove this line to make buttons clickable */
   grid-gap: 1rem;
+  z-index: 1000;
 
   &__title {
     grid-area: title;
@@ -155,6 +156,7 @@ a.frame__demo--current {
 	opacity: 0;
 	background: #8c718e;
 	will-change: transform, opacity;
+  z-index: 100;
 }
 
 .deco--1 {
