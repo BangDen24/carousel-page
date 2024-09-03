@@ -93,6 +93,7 @@ const Page3 = () => {
       {
         ease: "power4.in",
         scale: 0.1,
+        duration: 0.8,
         onComplete: () => gsap.set(SlideCurr, { scale: 1 }),
       },
       "start"

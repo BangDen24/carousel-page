@@ -12,7 +12,7 @@ import e from "../assets/55.jpg";
 // [HIGHLIGHT] Register Observer Plugin
 gsap.registerPlugin(Observer);
 
-const Page3 = () => {
+const PageX = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
 
@@ -174,4 +174,4 @@ const Page3 = () => {
   );
 };
 
-export default Page3;
+export default PageX;

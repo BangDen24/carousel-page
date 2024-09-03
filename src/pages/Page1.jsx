@@ -52,7 +52,7 @@ const Page1 = () => {
         setIsAnimating(false);
       },
     });
-
+    timeline.timeScale(0.2)
     timeline
       .addLabel("start", 0)
       .fromTo(
